@@ -2,104 +2,147 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>進度條賽車遊戲</title>
+  <title>🏁 Emoji 賽車遊戲</title>
   <style>
     body {
       font-family: sans-serif;
+      background: #eef;
       text-align: center;
-      background: #f0f8ff;
       padding: 30px;
     }
     select, button {
       font-size: 18px;
-      padding: 6px 10px;
+      padding: 8px 16px;
       margin: 10px;
     }
-    .race-track {
-      margin-top: 30px;
+    .track {
+      position: relative;
       width: 80%;
-      margin-left: auto;
-      margin-right: auto;
+      height: 50px;
+      margin: 30px auto;
+      background: #ccc;
+      border-radius: 25px;
+      overflow: hidden;
     }
-    .car-label {
-      text-align: left;
-      margin: 5px 0;
+    .car {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 32px;
+      transition: left 0.1s linear;
     }
-    .progress {
-      width: 100%;
-      height: 24px;
-      margin-bottom: 20px;
+    .car-name {
+      margin-bottom: 10px;
+      font-weight: bold;
+      font-size: 18px;
     }
-    #winner {
+    #countdown {
+      font-size: 48px;
+      margin: 20px 0;
+      color: #333;
+    }
+    .winner {
       font-size: 24px;
-      margin-top: 20px;
-      color: green;
+      color: gold;
+      font-weight: bold;
+      animation: blink 1s infinite alternate;
+    }
+    @keyframes blink {
+      from { text-shadow: 0 0 5px gold; }
+      to { text-shadow: 0 0 20px gold; }
     }
   </style>
 </head>
 <body>
-  <h1>🏎️ 賽車進度條比賽</h1>
+  <h1>🏎️ Emoji 賽車遊戲</h1>
 
-  <label for="carCount">選擇參賽車輛數量：</label>
+  <label for="carCount">選擇車輛數量：</label>
   <select id="carCount">
     <option value="2">2 台</option>
     <option value="3">3 台</option>
     <option value="4">4 台</option>
   </select>
-  <button onclick="startRace()">開始比賽</button>
+  <button onclick="prepareRace()">開始比賽</button>
 
-  <div class="race-track" id="track"></div>
+  <div id="countdown"></div>
+  <div id="raceArea"></div>
   <div id="winner"></div>
 
   <script>
-    let intervals = [];
+    const carNames = ["紅焰暴龍", "藍影風神", "狂飆綠魔", "閃電小黃"];
+    const carEmojis = ["🚗", "🚙", "🏎️", "🚘"];
+    let raceWidth = 800;
 
-    function startRace() {
-      const count = parseInt(document.getElementById('carCount').value);
-      const track = document.getElementById('track');
-      const winnerText = document.getElementById('winner');
-      track.innerHTML = '';
-      winnerText.textContent = '';
+    function prepareRace() {
+      const count = parseInt(document.getElementById("carCount").value);
+      const raceArea = document.getElementById("raceArea");
+      const countdown = document.getElementById("countdown");
+      const winnerDiv = document.getElementById("winner");
+      raceArea.innerHTML = "";
+      countdown.textContent = "";
+      winnerDiv.textContent = "";
 
-      // 清除上一次的比賽
-      intervals.forEach(i => clearInterval(i));
-      intervals = [];
-
+      // 建立賽道與車子
       const cars = [];
+      for (let i = 0; i < count; i++) {
+        const trackContainer = document.createElement("div");
+        const name = document.createElement("div");
+        name.className = "car-name";
+        name.innerText = `${carEmojis[i]} ${carNames[i]}`;
+        const track = document.createElement("div");
+        track.className = "track";
+        track.style.height = "50px";
 
-      for (let i = 1; i <= count; i++) {
-        const carRow = document.createElement('div');
-        carRow.classList.add('car-label');
-        carRow.innerHTML = `🚗 車 ${i}`;
+        const car = document.createElement("div");
+        car.className = "car";
+        car.style.left = "0px";
+        car.innerText = carEmojis[i];
+        car.dataset.name = carNames[i];
 
-        const progress = document.createElement('progress');
-        progress.max = 100;
-        progress.value = 0;
-        progress.classList.add('progress');
-        progress.id = `car${i}`;
-
-        track.appendChild(carRow);
-        track.appendChild(progress);
-
-        cars.push({ id: i, progress });
+        track.appendChild(car);
+        trackContainer.appendChild(name);
+        trackContainer.appendChild(track);
+        raceArea.appendChild(trackContainer);
+        cars.push({ element: car, distance: 0 });
       }
 
+      // 倒數 3 秒
+      let counter = 3;
+      countdown.textContent = counter;
+      const countdownTimer = setInterval(() => {
+        counter--;
+        if (counter === 0) {
+          countdown.textContent = "開始！";
+          clearInterval(countdownTimer);
+          setTimeout(() => {
+            countdown.textContent = "";
+            startRace(cars, winnerDiv);
+          }, 500);
+        } else {
+          countdown.textContent = counter;
+        }
+      }, 1000);
+    }
+
+    function startRace(cars, winnerDiv) {
+      const trackWidth = document.querySelector(".track").clientWidth - 40;
       let finished = false;
 
-      // 啟動所有車子
-      cars.forEach(car => {
-        const interval = setInterval(() => {
-          if (car.progress.value < 100) {
-            car.progress.value += Math.random() * 3; // 隨機速度
-            if (car.progress.value >= 100 && !finished) {
+      const raceInterval = setInterval(() => {
+        for (let car of cars) {
+          if (car.distance < trackWidth) {
+            car.distance += Math.random() * 8;
+            if (car.distance > trackWidth) car.distance = trackWidth;
+            car.element.style.left = car.distance + "px";
+
+            if (car.distance >= trackWidth && !finished) {
               finished = true;
-              winnerText.textContent = `🏆 車 ${car.id} 贏了！`;
-              intervals.forEach(i => clearInterval(i));
+              clearInterval(raceInterval);
+              winnerDiv.innerHTML = `🏆 <span class="winner">${car.element.dataset.name} 獲勝！</span>`;
             }
           }
-        }, 100);
-        intervals.push(interval);
-      });
+        }
+      }, 100);
     }
   </script>
 </body>
