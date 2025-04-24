@@ -59,23 +59,8 @@
       size = parseInt(document.getElementById("size").value);
       board = Array(size * size).fill(null);
       currentPlayer = 'B';
-      setupBoard();
       render();
-      statusDiv.textContent = "輪到：⚫ 玩家 (黑)";
-    }
-
-    function setupBoard() {
-      const mid = Math.floor(size / 2);
-      const getIdx = (r, c) => r * size + c;
-      if (size % 2 === 0) {
-        board[getIdx(mid-1, mid-1)] = 'W';
-        board[getIdx(mid, mid)] = 'W';
-        board[getIdx(mid-1, mid)] = 'B';
-        board[getIdx(mid, mid-1)] = 'B';
-      } else {
-        board[getIdx(mid, mid)] = 'W';
-        board[getIdx(mid, mid-1)] = 'B';
-      }
+      statusDiv.textContent = "輪到：\u26AB 玩家 (黑)";
     }
 
     function render() {
@@ -85,7 +70,7 @@
       board.forEach((cell, i) => {
         const div = document.createElement("div");
         div.className = "cell";
-        const piece = cell === 'B' ? '<span class="black">⚫</span>' : (cell === 'W' ? '<span class="white">⚫</span>' : '');
+        const piece = cell === 'B' ? '<span class="black">\u26AB</span>' : (cell === 'W' ? '<span class="white">\u26AB</span>' : '');
         div.innerHTML = piece;
         div.onclick = () => handleClick(i);
         boardDiv.appendChild(div);
@@ -95,7 +80,7 @@
         B: board.filter(c => c === 'B').length,
         W: board.filter(c => c === 'W').length
       };
-      scoreDiv.textContent = `⚫ 黑: ${score.B}　⚪ 白: ${score.W}`;
+      scoreDiv.textContent = `\u26AB 黑: ${score.B}　⚪ 白: ${score.W}`;
     }
 
     function handleClick(index) {
@@ -103,8 +88,7 @@
       makeMove(index, currentPlayer);
       currentPlayer = currentPlayer === 'B' ? 'W' : 'B';
       render();
-      if (currentPlayer === 'W') setTimeout(cpuMove, 500);
-      statusDiv.textContent = `輪到：${currentPlayer === 'B' ? '⚫ 玩家 (黑)' : '⚪ 電腦 (白)'}`;
+      statusDiv.textContent = `輪到：${currentPlayer === 'B' ? '\u26AB 玩家 (黑)' : '\u26AA 玩家 (白)'}`;
     }
 
     function getFlips(index, player) {
@@ -143,20 +127,6 @@
       const flips = getFlips(index, player);
       flips.forEach(i => board[i] = player);
       board[index] = player;
-    }
-
-    function cpuMove() {
-      const moves = board.map((_, i) => i).filter(i => canMove(i, 'W'));
-      if (moves.length === 0) {
-        currentPlayer = 'B';
-        statusDiv.textContent = "電腦跳過，輪到：⚫ 玩家 (黑)";
-        return;
-      }
-      const move = moves[Math.floor(Math.random() * moves.length)];
-      makeMove(move, 'W');
-      currentPlayer = 'B';
-      render();
-      statusDiv.textContent = "輪到：⚫ 玩家 (黑)";
     }
   </script>
 </body>
