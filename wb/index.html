@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>黑白棋：4x4 / 5x5</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f9f9f9;
+      padding: 20px;
+    }
+    #board {
+      display: grid;
+      gap: 2px;
+      justify-content: center;
+      margin: 20px auto;
+    }
+    .cell {
+      width: 60px;
+      height: 60px;
+      background: #4CAF50;
+      border-radius: 5px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 30px;
+      cursor: pointer;
+    }
+    .black { color: black; }
+    .white { color: white; }
+    #status { font-size: 20px; margin: 10px; }
+    #score { margin: 10px; }
+  </style>
+</head>
+<body>
+  <h1>黑白棋 🎯</h1>
+
+  <label for="size">棋盤大小：</label>
+  <select id="size">
+    <option value="4">4x4</option>
+    <option value="5">5x5</option>
+  </select>
+  <button onclick="initGame()">開始遊戲</button>
+
+  <div id="status">請選擇棋盤大小並開始遊戲</div>
+  <div id="score"></div>
+  <div id="board"></div>
+
+  <script>
+    const boardDiv = document.getElementById("board");
+    const statusDiv = document.getElementById("status");
+    const scoreDiv = document.getElementById("score");
+    let size = 4;
+    let board = [];
+    let currentPlayer = 'B';
+
+    function initGame() {
+      size = parseInt(document.getElementById("size").value);
+      board = Array(size * size).fill(null);
+      currentPlayer = 'B';
+      setupBoard();
+      render();
+      statusDiv.textContent = "輪到：⚫ 玩家 (黑)";
+    }
+
+    function setupBoard() {
+      const mid = Math.floor(size / 2);
+      const getIdx = (r, c) => r * size + c;
+      if (size % 2 === 0) {
+        board[getIdx(mid-1, mid-1)] = 'W';
+        board[getIdx(mid, mid)] = 'W';
+        board[getIdx(mid-1, mid)] = 'B';
+        board[getIdx(mid, mid-1)] = 'B';
+      } else {
+        board[getIdx(mid, mid)] = 'W';
+        board[getIdx(mid, mid-1)] = 'B';
+      }
+    }
+
+    function render() {
+      boardDiv.innerHTML = "";
+      boardDiv.style.gridTemplateColumns = `repeat(${size}, 60px)`;
+
+      board.forEach((cell, i) => {
+        const div = document.createElement("div");
+        div.className = "cell";
+        const piece = cell === 'B' ? '<span class="black">⚫</span>' : (cell === 'W' ? '<span class="white">⚫</span>' : '');
+        div.innerHTML = piece;
+        div.onclick = () => handleClick(i);
+        boardDiv.appendChild(div);
+      });
+
+      const score = {
+        B: board.filter(c => c === 'B').length,
+        W: board.filter(c => c === 'W').length
+      };
+      scoreDiv.textContent = `⚫ 黑: ${score.B}　⚪ 白: ${score.W}`;
+    }
+
+    function handleClick(index) {
+      if (board[index] || !canMove(index, currentPlayer)) return;
+      makeMove(index, currentPlayer);
+      currentPlayer = currentPlayer === 'B' ? 'W' : 'B';
+      render();
+      if (currentPlayer === 'W') setTimeout(cpuMove, 500);
+      statusDiv.textContent = `輪到：${currentPlayer === 'B' ? '⚫ 玩家 (黑)' : '⚪ 電腦 (白)'}`;
+    }
+
+    function getFlips(index, player) {
+      const directions = [-1, 1, -size, size, -size-1, -size+1, size-1, size+1];
+      const flips = [];
+      const opponent = player === 'B' ? 'W' : 'B';
+      const row = Math.floor(index / size);
+      const col = index % size;
+
+      for (let dir of directions) {
+        const temp = [];
+        let i = index + dir;
+        while (i >= 0 && i < size * size) {
+          const r = Math.floor(i / size);
+          const c = i % size;
+          if (Math.abs(r - row) > 1 && Math.abs(c - col) > 1) break;
+          if (board[i] === opponent) {
+            temp.push(i);
+          } else if (board[i] === player) {
+            flips.push(...temp);
+            break;
+          } else {
+            break;
+          }
+          i += dir;
+        }
+      }
+      return flips;
+    }
+
+    function canMove(index, player) {
+      return getFlips(index, player).length > 0;
+    }
+
+    function makeMove(index, player) {
+      const flips = getFlips(index, player);
+      flips.forEach(i => board[i] = player);
+      board[index] = player;
+    }
+
+    function cpuMove() {
+      const moves = board.map((_, i) => i).filter(i => canMove(i, 'W'));
+      if (moves.length === 0) {
+        currentPlayer = 'B';
+        statusDiv.textContent = "電腦跳過，輪到：⚫ 玩家 (黑)";
+        return;
+      }
+      const move = moves[Math.floor(Math.random() * moves.length)];
+      makeMove(move, 'W');
+      currentPlayer = 'B';
+      render();
+      statusDiv.textContent = "輪到：⚫ 玩家 (黑)";
+    }
+  </script>
+</body>
+</html>
