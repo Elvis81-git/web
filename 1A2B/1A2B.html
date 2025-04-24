@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>1A2B 猜數字遊戲</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f0f0f0;
+      padding: 40px;
+    }
+    input, button {
+      font-size: 18px;
+      padding: 8px;
+    }
+    #history {
+      margin-top: 20px;
+      text-align: left;
+      max-width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔢 1A2B 猜數字遊戲</h1>
+  <p>輸入 4 位數（不重複）來猜答案！</p>
+  <input type="text" id="guessInput" maxlength="4" placeholder="1234">
+  <button onclick="guess()">猜！</button>
+  <p id="result"></p>
+  <div id="history"></div>
+
+  <script>
+    function generateAnswer() {
+      let digits = [];
+      while (digits.length < 4) {
+        let n = Math.floor(Math.random() * 10);
+        if (!digits.includes(n)) digits.push(n);
+      }
+      return digits.join('');
+    }
+
+    let answer = generateAnswer();
+    let guessCount = 0;
+
+    function guess() {
+      const input = document.getElementById('guessInput').value;
+      const resultText = document.getElementById('result');
+      const history = document.getElementById('history');
+
+      if (!/^\d{4}$/.test(input) || new Set(input).size !== 4) {
+        resultText.textContent = '請輸入4位不重複數字！';
+        return;
+      }
+
+      guessCount++;
+      let A = 0, B = 0;
+      for (let i = 0; i < 4; i++) {
+        if (input[i] === answer[i]) A++;
+        else if (answer.includes(input[i])) B++;
+      }
+
+      const line = `第 ${guessCount} 次：${input} ➜ ${A}A${B}B`;
+      history.innerHTML += `<p>${line}</p>`;
+
+      if (A === 4) {
+        resultText.textContent = `🎉 恭喜你猜對了！答案是 ${answer}`;
+      } else {
+        resultText.textContent = `${A}A${B}B`;
+      }
+
+      document.getElementById('guessInput').value = '';
+    }
+  </script>
+</body>
+</html>
