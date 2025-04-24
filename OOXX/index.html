@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>井字遊戲：單人 vs 雙人</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f0f0f0;
+      padding-top: 50px;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    #mode-select {
+      margin-bottom: 20px;
+    }
+    select, button {
+      font-size: 18px;
+      padding: 6px 16px;
+      margin: 10px;
+    }
+    #game {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-gap: 5px;
+      justify-content: center;
+      margin: auto;
+    }
+    .cell {
+      width: 100px;
+      height: 100px;
+      background: white;
+      font-size: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 10px;
+      box-shadow: 0 0 5px #aaa;
+    }
+    #status {
+      font-size: 24px;
+      margin: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>⭕❌ 井字遊戲</h1>
+
+  <div id="mode-select">
+    <label for="mode">遊戲模式：</label>
+    <select id="mode">
+      <option value="2p">2 人對戰</option>
+      <option value="cpu">單人 vs 電腦</option>
+    </select>
+    <button onclick="init()">開始遊戲</button>
+  </div>
+
+  <div id="status">請選擇模式並開始</div>
+  <div id="game"></div>
+
+  <script>
+    const gameDiv = document.getElementById("game");
+    const statusDiv = document.getElementById("status");
+    const modeSelect = document.getElementById("mode");
+    let board = [];
+    let currentPlayer = "❌";
+    let gameOver = false;
+    let mode = "2p";
+
+    function init() {
+      board = Array(9).fill("");
+      currentPlayer = "❌";
+      gameOver = false;
+      mode = modeSelect.value;
+      statusDiv.textContent = `輪到：${currentPlayer}`;
+      renderBoard();
+      if (mode === "cpu" && currentPlayer === "⭕") cpuMove();
+    }
+
+    function renderBoard() {
+      gameDiv.innerHTML = "";
+      board.forEach((value, index) => {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.textContent = value;
+        cell.onclick = () => handleClick(index);
+        gameDiv.appendChild(cell);
+      });
+    }
+
+    function handleClick(index) {
+      if (board[index] || gameOver) return;
+
+      board[index] = currentPlayer;
+      renderBoard();
+      if (checkWinner(currentPlayer)) {
+        statusDiv.textContent = `${currentPlayer} 勝利了！🎉`;
+        gameOver = true;
+        return;
+      }
+
+      if (board.every(cell => cell)) {
+        statusDiv.textContent = "平手了 🤝";
+        gameOver = true;
+        return;
+      }
+
+      currentPlayer = currentPlayer === "❌" ? "⭕" : "❌";
+      statusDiv.textContent = `輪到：${currentPlayer}`;
+
+      if (mode === "cpu" && currentPlayer === "⭕" && !gameOver) {
+        setTimeout(cpuMove, 500);
+      }
+    }
+
+    function cpuMove() {
+      const emptyIndexes = board.map((val, idx) => val === "" ? idx : null).filter(idx => idx !== null);
+      const choice = emptyIndexes[Math.floor(Math.random() * emptyIndexes.length)];
+      handleClick(choice);
+    }
+
+    function checkWinner(player) {
+      const winPatterns = [
+        [0,1,2], [3,4,5], [6,7,8],
+        [0,3,6], [1,4,7], [2,5,8],
+        [0,4,8], [2,4,6]
+      ];
+      return winPatterns.some(pattern => pattern.every(i => board[i] === player));
+    }
+
+    init(); // 預設先初始化（可拿掉）
+  </script>
+
+</body>
+</html>
