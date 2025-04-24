@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>10秒挑戰遊戲</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f0f0f0;
+      padding: 50px;
+    }
+    button {
+      font-size: 24px;
+      padding: 12px 30px;
+      margin: 20px;
+      cursor: pointer;
+    }
+    #result {
+      font-size: 24px;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+  <h1>⌛ 10 秒挑戰遊戲</h1>
+  <p>點擊「開始」，等你覺得 10 秒到了再按「我到了！」</p>
+  <button id="startBtn" onclick="startGame()">開始</button>
+  <button id="stopBtn" onclick="stopGame()" disabled>我到了！</button>
+  <div id="result"></div>
+
+  <script>
+    let startTime = 0;
+
+    function startGame() {
+      document.getElementById('result').textContent = '';
+      startTime = Date.now();
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('stopBtn').disabled = false;
+    }
+
+    function stopGame() {
+      const endTime = Date.now();
+      const elapsed = (endTime - startTime) / 1000;
+      const error = Math.abs(10 - elapsed).toFixed(2);
+
+      document.getElementById('result').innerHTML =
+        `你按了 <strong>${elapsed.toFixed(2)}</strong> 秒，<br>與 10 秒相差 <strong>${error}</strong> 秒`;
+
+      document.getElementById('startBtn').disabled = false;
+      document.getElementById('stopBtn').disabled = true;
+    }
+  </script>
+</body>
+</html>
