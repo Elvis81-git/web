@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>🧮 速算王者</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f0f8ff;
+      padding: 40px;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    #question {
+      font-size: 32px;
+      margin: 20px 0;
+    }
+    .options {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    .options button {
+      font-size: 24px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+    #score, #timer {
+      font-size: 20px;
+      margin: 10px;
+    }
+    #result {
+      font-size: 24px;
+      margin-top: 10px;
+    }
+    #startBtn {
+      font-size: 20px;
+      padding: 10px 30px;
+      margin-top: 30px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🧮 速算王者</h1>
+  <div id="score">分數：0</div>
+  <div id="timer">剩餘時間：30 秒</div>
+  <div id="question">點「開始」來出題！</div>
+
+  <div class="options" id="options">
+    <!-- 選項按鈕會動態加入 -->
+  </div>
+
+  <button id="startBtn" onclick="startGame()">開始遊戲</button>
+  <div id="result"></div>
+
+  <script>
+    let score = 0;
+    let timeLeft = 30;
+    let timer;
+    const questionDiv = document.getElementById('question');
+    const scoreDiv = document.getElementById('score');
+    const timerDiv = document.getElementById('timer');
+    const resultDiv = document.getElementById('result');
+    const optionsDiv = document.getElementById('options');
+    const startBtn = document.getElementById('startBtn');
+
+    function startGame() {
+      score = 0;
+      timeLeft = 30;
+      scoreDiv.textContent = `分數：${score}`;
+      timerDiv.textContent = `剩餘時間：${timeLeft} 秒`;
+      startBtn.disabled = true;
+      resultDiv.textContent = '';
+      optionsDiv.innerHTML = '';
+      nextQuestion();
+
+      timer = setInterval(() => {
+        timeLeft--;
+        timerDiv.textContent = `剩餘時間：${timeLeft} 秒`;
+        if (timeLeft <= 0) {
+          clearInterval(timer);
+          questionDiv.textContent = '遊戲結束！';
+          optionsDiv.innerHTML = '';
+          resultDiv.textContent = `🎉 你的總得分是 ${score} 分！`;
+          startBtn.disabled = false;
+        }
+      }, 1000);
+    }
+
+    function nextQuestion() {
+      const operators = ['+', '-', '*', '/'];
+      const op = operators[Math.floor(Math.random() * operators.length)];
+      let a = Math.floor(Math.random() * 20) + 1;
+      let b = Math.floor(Math.random() * 20) + 1;
+
+      if (op === '-' && a < b) [a, b] = [b, a];
+      if (op === '/') {
+        b = Math.floor(Math.random() * 9) + 1;
+        a = b * (Math.floor(Math.random() * 10) + 1);
+      }
+
+      const questionText = `${a} ${op} ${b}`;
+      const correctAnswer = eval(questionText);
+
+      questionDiv.textContent = `❓ ${questionText} = ?`;
+
+      // 建立選項
+      const options = new Set();
+      options.add(correctAnswer);
+
+      while (options.size < 4) {
+        const wrong = correctAnswer + Math.floor(Math.random() * 21) - 10;
+        if (wrong !== correctAnswer && Number.isFinite(wrong)) {
+          options.add(wrong);
+        }
+      }
+
+      const shuffledOptions = [...options].sort(() => Math.random() - 0.5);
+      optionsDiv.innerHTML = '';
+      shuffledOptions.forEach(opt => {
+        const btn = document.createElement('button');
+        btn.textContent = opt;
+        btn.onclick = () => {
+          if (opt === correctAnswer) {
+            score++;
+            resultDiv.textContent = '✅ 答對了！';
+          } else {
+            resultDiv.textContent = `❌ 錯了！正確答案是 ${correctAnswer}`;
+          }
+          scoreDiv.textContent = `分數：${score}`;
+          if (timeLeft > 0) setTimeout(nextQuestion, 600);
+        };
+        optionsDiv.appendChild(btn);
+      });
+    }
+  </script>
+
+</body>
+</html>
