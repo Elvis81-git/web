@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>五子棋遊戲</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background: #f4f4f4;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 10px;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(15, 30px);
+      gap: 1px;
+      justify-content: center;
+      margin: 20px auto;
+    }
+    .cell {
+      width: 30px;
+      height: 30px;
+      background: #e0c68e;
+      border: 1px solid #aaa;
+      box-sizing: border-box;
+      position: relative;
+      cursor: pointer;
+    }
+    .piece {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      position: absolute;
+      top: 3px;
+      left: 3px;
+    }
+    .black {
+      background: black;
+    }
+    .white {
+      background: white;
+      border: 1px solid #999;
+    }
+    #status {
+      font-size: 20px;
+      margin-top: 10px;
+    }
+    button {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>五子棋遊戲 ⚫⚪</h1>
+  <div id="status">輪到：⚫ 黑子</div>
+  <div id="board"></div>
+  <button onclick="initGame()">重新開始</button>
+
+  <script>
+    const size = 15;
+    let board = [];
+    let currentPlayer = 'B';
+    let gameOver = false;
+    const boardDiv = document.getElementById("board");
+    const statusDiv = document.getElementById("status");
+
+    function initGame() {
+      board = Array(size).fill(null).map(() => Array(size).fill(null));
+      currentPlayer = 'B';
+      gameOver = false;
+      boardDiv.innerHTML = "";
+
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+          cell.addEventListener("click", () => handleClick(r, c));
+          boardDiv.appendChild(cell);
+        }
+      }
+      statusDiv.textContent = "輪到：⚫ 黑子";
+    }
+
+    function handleClick(r, c) {
+      if (board[r][c] || gameOver) return;
+
+      board[r][c] = currentPlayer;
+      const cell = document.querySelector(`.cell[data-row="${r}"][data-col="${c}"]`);
+      const piece = document.createElement("div");
+      piece.className = "piece " + (currentPlayer === 'B' ? "black" : "white");
+      cell.appendChild(piece);
+
+      if (checkWin(r, c, currentPlayer)) {
+        statusDiv.textContent = (currentPlayer === 'B' ? "⚫ 黑子" : "⚪ 白子") + " 獲勝！🎉";
+        gameOver = true;
+        return;
+      }
+
+      currentPlayer = currentPlayer === 'B' ? 'W' : 'B';
+      statusDiv.textContent = `輪到：${currentPlayer === 'B' ? '⚫ 黑子' : '⚪ 白子'}`;
+    }
+
+    function checkWin(r, c, player) {
+      const directions = [
+        [0, 1],   // 橫向
+        [1, 0],   // 垂直
+        [1, 1],   // 斜右下
+        [1, -1]   // 斜左下
+      ];
+
+      for (let [dr, dc] of directions) {
+        let count = 1;
+
+        for (let i = 1; i < 5; i++) {
+          const nr = r + dr * i;
+          const nc = c + dc * i;
+          if (nr < 0 || nc < 0 || nr >= size || nc >= size || board[nr][nc] !== player) break;
+          count++;
+        }
+
+        for (let i = 1; i < 5; i++) {
+          const nr = r - dr * i;
+          const nc = c - dc * i;
+          if (nr < 0 || nc < 0 || nr >= size || nc >= size || board[nr][nc] !== player) break;
+          count++;
+        }
+
+        if (count >= 5) return true;
+      }
+
+      return false;
+    }
+
+    initGame();
+  </script>
+</body>
+</html>
