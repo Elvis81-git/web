@@ -60,7 +60,6 @@
       board = Array(size * size).fill(null);
       currentPlayer = 'B';
 
-      // 中央放置起始棋子（僅限偶數棋盤）
       if (size % 2 === 0) {
         const mid = size / 2;
         board[(mid - 1) * size + (mid - 1)] = 'W';
@@ -68,15 +67,13 @@
         board[mid * size + (mid - 1)] = 'B';
         board[mid * size + mid] = 'W';
       }
-
       render();
-      statusDiv.textContent = "輪到：⚫ 玩家 (黑)";
+      updateStatus();
     }
 
     function render() {
       boardDiv.innerHTML = "";
       boardDiv.style.gridTemplateColumns = `repeat(${size}, 60px)`;
-
       board.forEach((cell, i) => {
         const div = document.createElement("div");
         div.className = "cell";
@@ -88,7 +85,6 @@
         div.onclick = () => handleClick(i);
         boardDiv.appendChild(div);
       });
-
       const score = {
         B: board.filter(c => c === 'B').length,
         W: board.filter(c => c === 'W').length
@@ -101,38 +97,47 @@
 
       makeMove(index, currentPlayer);
       currentPlayer = currentPlayer === 'B' ? 'W' : 'B';
+
+      if (!hasAnyMove(currentPlayer)) {
+        currentPlayer = currentPlayer === 'B' ? 'W' : 'B';
+        if (!hasAnyMove(currentPlayer)) {
+          endGame();
+          return;
+        }
+        alert("沒有可以下的地方，自動跳過回合！");
+      }
+
       render();
-      statusDiv.textContent = `輪到：${currentPlayer === 'B' ? '⚫ 玩家 (黑)' : '⚪ 玩家 (白)'}`;
+      updateStatus();
     }
 
     function getFlips(index, player) {
-      const directions = [-1, 1, -size, size, -size-1, -size+1, size-1, size+1];
+      const directions = [
+        [-1, 0], [1, 0], [0, -1], [0, 1],
+        [-1, -1], [-1, 1], [1, -1], [1, 1]
+      ];
       const flips = [];
       const opponent = player === 'B' ? 'W' : 'B';
       const row = Math.floor(index / size);
       const col = index % size;
 
-      for (let dir of directions) {
+      for (let [dr, dc] of directions) {
         const temp = [];
-        let i = index + dir;
+        let r = row + dr;
+        let c = col + dc;
 
-        while (i >= 0 && i < size * size) {
-          const r = Math.floor(i / size);
-          const c = i % size;
-
-          // 檢查是否越界
-          if (Math.abs(r - row) > 1 && Math.abs(c - col) > 1) break;
-          if (Math.abs(r - row) > size || Math.abs(c - col) > size) break;
-
+        while (r >= 0 && r < size && c >= 0 && c < size) {
+          const i = r * size + c;
           if (board[i] === opponent) {
             temp.push(i);
           } else if (board[i] === player) {
-            flips.push(...temp);
+            if (temp.length > 0) flips.push(...temp);
             break;
           } else {
             break;
           }
-          i += dir;
+          r += dr;
+          c += dc;
         }
       }
       return flips;
@@ -146,6 +151,27 @@
       const flips = getFlips(index, player);
       flips.forEach(i => board[i] = player);
       board[index] = player;
+    }
+
+    function hasAnyMove(player) {
+      return board.some((cell, i) => !cell && canMove(i, player));
+    }
+
+    function updateStatus() {
+      statusDiv.textContent = `輪到：${currentPlayer === 'B' ? '⚫ 玩家 (黑)' : '⚪ 玩家 (白)'}`;
+    }
+
+    function endGame() {
+      const black = board.filter(c => c === 'B').length;
+      const white = board.filter(c => c === 'W').length;
+      if (black > white) {
+        statusDiv.textContent = `🎉 黑棋勝利！ (${black} : ${white})`;
+      } else if (white > black) {
+        statusDiv.textContent = `🎉 白棋勝利！ (${white} : ${black})`;
+      } else {
+        statusDiv.textContent = `⚖️ 平手！ (${black} : ${white})`;
+      }
+      alert("遊戲結束！");
     }
   </script>
 </body>
