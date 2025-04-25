@@ -13,9 +13,9 @@
     h1 {
       font-size: 36px;
     }
-    .score {
+    .score, .timer {
       font-size: 24px;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
     .game {
       display: grid;
@@ -49,6 +49,8 @@
 <body>
   <h1>打地鼠遊戲 🐹</h1>
   <div class="score">得分：<span id="score">0</span></div>
+  <div class="timer">剩餘時間：<span id="time">30</span> 秒</div>
+
   <div class="game">
     <div class="hole" onclick="hit(0)"><div class="mole" id="mole0"></div></div>
     <div class="hole" onclick="hit(1)"><div class="mole" id="mole1"></div></div>
@@ -61,12 +63,18 @@
   <script>
     let score = 0;
     let currentMole = -1;
+    let gameInterval;
+    let timeLeft = 30;
+    let timerInterval;
+    let gameEnded = false;
 
     function randomHole() {
       return Math.floor(Math.random() * 6);
     }
 
     function showMole() {
+      if (gameEnded) return;
+
       if (currentMole !== -1) {
         document.getElementById('mole' + currentMole).classList.remove('show');
       }
@@ -75,6 +83,8 @@
     }
 
     function hit(index) {
+      if (gameEnded) return;
+
       if (index === currentMole) {
         score++;
         document.getElementById('score').textContent = score;
@@ -83,7 +93,29 @@
       }
     }
 
-    setInterval(showMole, 800); // 每 0.8 秒出現一隻地鼠
+    function startGame() {
+      gameInterval = setInterval(showMole, 800); // 每 0.8 秒出現一隻地鼠
+
+      timerInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById('time').textContent = timeLeft;
+
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function endGame() {
+      clearInterval(gameInterval);
+      clearInterval(timerInterval);
+      gameEnded = true;
+      document.querySelectorAll('.mole').forEach(mole => mole.classList.remove('show'));
+      alert(`遊戲結束！你得了 ${score} 分 🎉`);
+    }
+
+    // 自動開始遊戲
+    startGame();
   </script>
 </body>
 </html>
