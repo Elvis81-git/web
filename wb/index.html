@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>黑白棋：4x4 / 5x5</title>
+  <title>黑白棋：4x4 / 6x6</title>
   <style>
     body {
       font-family: sans-serif;
@@ -39,7 +39,7 @@
   <label for="size">棋盤大小：</label>
   <select id="size">
     <option value="4">4x4</option>
-    <option value="5">5x5</option>
+    <option value="6">6x6</option>
   </select>
   <button onclick="initGame()">開始遊戲</button>
 
@@ -67,6 +67,7 @@
         board[mid * size + (mid - 1)] = 'B';
         board[mid * size + mid] = 'W';
       }
+
       render();
       updateStatus();
     }
