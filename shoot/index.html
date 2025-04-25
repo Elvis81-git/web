@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>數學射擊突擊隊</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+      background: #222;
+      color: white;
+      text-align: center;
+    }
+    canvas {
+      background: #333;
+      display: block;
+      margin: auto;
+    }
+    #hud {
+      margin: 10px;
+      font-size: 20px;
+    }
+    .btn-group {
+      margin: 10px;
+    }
+    button {
+      font-size: 20px;
+      margin: 0 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="hud">
+    <span id="score">得分：0</span>　
+    <span id="timer">剩餘時間：30s</span><br>
+    <span id="question"></span>
+  </div>
+  <div class="btn-group">
+    <button onclick="choose('+')">+</button>
+    <button onclick="choose('-')">-</button>
+    <button onclick="choose('*')">*</button>
+    <button onclick="choose('/')">/</button>
+  </div>
+  <canvas id="gameCanvas" width="800" height="400"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const questionText = document.getElementById("question");
+    const scoreText = document.getElementById("score");
+    const timerText = document.getElementById("timer");
+
+    let score = 0;
+    let timeLeft = 30;
+    let gameInterval, monsterInterval;
+    let monster = null;
+    let bullets = [];
+    let currentNums = [];
+    let target = 0;
+
+    function randomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function newQuestion() {
+      const a = randomInt(1, 20);
+      const b = randomInt(1, 10);
+      const ops = ['+', '-', '*', '/'];
+      const op = ops[randomInt(0, 3)];
+      let result;
+
+      switch (op) {
+        case '+': result = a + b; break;
+        case '-': result = a - b; break;
+        case '*': result = a * b; break;
+        case '/': result = parseFloat((a / b).toFixed(2)); break;
+      }
+
+      target = result;
+      currentNums = [a, b];
+      questionText.textContent = `請選擇使 ${a} ? ${b} = ${target} 的運算符號`;
+      monster = { x: 800, y: 200, width: 60, height: 60 };
+    }
+
+    function choose(op) {
+      let [a, b] = currentNums;
+      let result;
+      switch (op) {
+        case '+': result = a + b; break;
+        case '-': result = a - b; break;
+        case '*': result = a * b; break;
+        case '/': result = parseFloat((a / b).toFixed(2)); break;
+      }
+
+      if (result === target) {
+        bullets.push({ x: 100, y: 200, vx: 10 });
+      }
+    }
+
+    function update() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (monster) {
+        monster.x -= 2;
+        ctx.fillStyle = "#FF4444";
+        ctx.fillRect(monster.x, monster.y, monster.width, monster.height);
+        ctx.fillStyle = "#fff";
+        ctx.fillText(target, monster.x + 10, monster.y + 35);
+      }
+
+      for (let bullet of bullets) {
+        bullet.x += bullet.vx;
+        ctx.fillStyle = "yellow";
+        ctx.fillRect(bullet.x, bullet.y + 20, 10, 5);
+
+        if (monster && bullet.x > monster.x && bullet.x < monster.x + monster.width) {
+          // 命中
+          score++;
+          scoreText.textContent = `得分：${score}`;
+          monster = null;
+          bullets = [];
+          newQuestion();
+        }
+      }
+
+      bullets = bullets.filter(b => b.x < canvas.width);
+    }
+
+    function startGame() {
+      newQuestion();
+      gameInterval = setInterval(() => {
+        update();
+      }, 1000 / 60);
+
+      let countdown = setInterval(() => {
+        timeLeft--;
+        timerText.textContent = `剩餘時間：${timeLeft}s`;
+        if (timeLeft <= 0) {
+          clearInterval(gameInterval);
+          clearInterval(countdown);
+          alert("⏰ 時間到！你的最終得分：" + score);
+          location.reload();
+        }
+      }, 1000);
+    }
+
+    startGame();
+  </script>
+</body>
+</html>
