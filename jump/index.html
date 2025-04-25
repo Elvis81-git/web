@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>火柴人跑酷</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #222;
+    }
+    canvas {
+      display: block;
+      background: #eee;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas" width="800" height="300"></canvas>
+  <script>
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const stickman = {
+      x: 50,
+      y: 240,
+      width: 30,
+      height: 50,
+      color: 'black',
+      vy: 0,
+      gravity: 1.2,
+      jumping: false,
+      crouching: false
+    };
+
+    let obstacles = [];
+    let shockwaves = [];
+    let gameSpeed = 5;
+    let score = 0;
+    let gameOver = false;
+
+    function drawStickman() {
+      ctx.fillStyle = stickman.color;
+      const h = stickman.crouching ? stickman.height / 2 : stickman.height;
+      const y = stickman.crouching ? stickman.y + stickman.height / 2 : stickman.y;
+      ctx.fillRect(stickman.x, y, stickman.width, h);
+    }
+
+    function spawnObstacle() {
+      const isTall = Math.random() > 0.5;
+      const height = isTall ? 50 : 25;
+      obstacles.push({
+        x: canvas.width,
+        y: canvas.height - height - 10,
+        width: 20,
+        height: height,
+        destructible: Math.random() < 0.5 // 一半可用衝擊波破壞
+      });
+    }
+
+    function drawObstacles() {
+      for (let obs of obstacles) {
+        ctx.fillStyle = obs.destructible ? '#FF4444' : '#555';
+        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+      }
+    }
+
+    function drawShockwaves() {
+      ctx.fillStyle = '#00f';
+      for (let wave of shockwaves) {
+        ctx.fillRect(wave.x, wave.y, wave.width, wave.height);
+      }
+    }
+
+    function updateGame() {
+      if (gameOver) return;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Stickman physics
+      stickman.y += stickman.vy;
+      if (stickman.y + stickman.height >= canvas.height - 10) {
+        stickman.y = canvas.height - stickman.height - 10;
+        stickman.vy = 0;
+        stickman.jumping = false;
+      } else {
+        stickman.vy += stickman.gravity;
+      }
+
+      // Update shockwaves
+      for (let wave of shockwaves) wave.x += 10;
+      shockwaves = shockwaves.filter(w => w.x < canvas.width);
+
+      // Update obstacles
+      for (let obs of obstacles) obs.x -= gameSpeed;
+      obstacles = obstacles.filter(obs => obs.x + obs.width > 0);
+
+      // Spawn new obstacles
+      if (Math.random() < 0.02) spawnObstacle();
+
+      // Check collisions
+      for (let obs of obstacles) {
+        // 衝擊波命中障礙物
+        for (let wave of shockwaves) {
+          if (wave.x < obs.x + obs.width &&
+              wave.x + wave.width > obs.x &&
+              wave.y < obs.y + obs.height &&
+              wave.y + wave.height > obs.y &&
+              obs.destructible) {
+            obs.hit = true;
+          }
+        }
+
+        // 火柴人碰撞障礙物（未被破壞）
+        const h = stickman.crouching ? stickman.height / 2 : stickman.height;
+        const y = stickman.crouching ? stickman.y + stickman.height / 2 : stickman.y;
+        if (!obs.hit &&
+            stickman.x < obs.x + obs.width &&
+            stickman.x + stickman.width > obs.x &&
+            y < obs.y + obs.height &&
+            y + h > obs.y) {
+          gameOver = true;
+          alert("💥 遊戲結束！得分：" + score);
+        }
+      }
+
+      // 移除已命中的障礙物
+      obstacles = obstacles.filter(obs => !obs.hit);
+
+      drawStickman();
+      drawObstacles();
+      drawShockwaves();
+
+      score++;
+      ctx.fillStyle = "#000";
+      ctx.font = "20px sans-serif";
+      ctx.fillText("分數：" + score, 10, 25);
+
+      requestAnimationFrame(updateGame);
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp' && !stickman.jumping) {
+        stickman.vy = -15;
+        stickman.jumping = true;
+      }
+      if (e.key === 'ArrowDown') {
+        stickman.crouching = true;
+      }
+      if (e.code === 'Space') {
+        shockwaves.push({
+          x: stickman.x + stickman.width,
+          y: stickman.y + 20,
+          width: 20,
+          height: 10
+        });
+      }
+    });
+
+    document.addEventListener('keyup', (e) => {
+      if (e.key === 'ArrowDown') {
+        stickman.crouching = false;
+      }
+    });
+
+    updateGame();
+  </script>
+</body>
+</html>
