@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <title>數學射擊突擊隊</title>
+  <title>數學射擊突擊隊 進階版</title>
   <style>
     body {
       margin: 0;
@@ -55,11 +55,18 @@
 
     let score = 0;
     let timeLeft = 30;
-    let gameInterval, monsterInterval;
+    let gameInterval;
     let monster = null;
     let bullets = [];
     let currentNums = [];
     let target = 0;
+
+    const player = {
+      x: 80,
+      y: 200,
+      width: 40,
+      height: 60
+    };
 
     function randomInt(min, max) {
       return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -95,29 +102,66 @@
         case '/': result = parseFloat((a / b).toFixed(2)); break;
       }
 
-      if (result === target) {
-        bullets.push({ x: 100, y: 200, vx: 10 });
+      bullets.push({
+        x: player.x + player.width,
+        y: player.y + 20,
+        vx: 10,
+        correct: result === target
+      });
+
+      if (result !== target) {
+        score = Math.max(0, score - 1);
+        scoreText.textContent = `得分：${score}`;
       }
+    }
+
+    function drawPlayer() {
+      ctx.fillStyle = "#000";
+      // 簡單火柴人造型
+      ctx.beginPath(); // 頭
+      ctx.arc(player.x + 20, player.y, 10, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath(); // 身體
+      ctx.moveTo(player.x + 20, player.y + 10);
+      ctx.lineTo(player.x + 20, player.y + 40);
+      ctx.moveTo(player.x + 20, player.y + 15); // 手
+      ctx.lineTo(player.x, player.y + 30);
+      ctx.moveTo(player.x + 20, player.y + 15);
+      ctx.lineTo(player.x + 40, player.y + 30);
+      ctx.moveTo(player.x + 20, player.y + 40); // 腳
+      ctx.lineTo(player.x, player.y + 60);
+      ctx.moveTo(player.x + 20, player.y + 40);
+      ctx.lineTo(player.x + 40, player.y + 60);
+      ctx.strokeStyle = "#000";
+      ctx.stroke();
     }
 
     function update() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      drawPlayer();
 
       if (monster) {
         monster.x -= 2;
         ctx.fillStyle = "#FF4444";
         ctx.fillRect(monster.x, monster.y, monster.width, monster.height);
         ctx.fillStyle = "#fff";
+        ctx.font = "20px sans-serif";
         ctx.fillText(target, monster.x + 10, monster.y + 35);
       }
 
       for (let bullet of bullets) {
         bullet.x += bullet.vx;
-        ctx.fillStyle = "yellow";
-        ctx.fillRect(bullet.x, bullet.y + 20, 10, 5);
+        ctx.fillStyle = bullet.correct ? "yellow" : "gray";
+        ctx.fillRect(bullet.x, bullet.y, 10, 5);
 
-        if (monster && bullet.x > monster.x && bullet.x < monster.x + monster.width) {
-          // 命中
+        if (
+          monster &&
+          bullet.correct &&
+          bullet.x > monster.x &&
+          bullet.x < monster.x + monster.width
+        ) {
           score++;
           scoreText.textContent = `得分：${score}`;
           monster = null;
@@ -131,6 +175,7 @@
 
     function startGame() {
       newQuestion();
+
       gameInterval = setInterval(() => {
         update();
       }, 1000 / 60);
