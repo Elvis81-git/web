@@ -26,11 +26,23 @@
       align-items: center;
       font-size: 30px;
       cursor: pointer;
+      position: relative;
     }
     .black { color: black; }
     .white { color: white; }
     #status { font-size: 20px; margin: 10px; }
     #score { margin: 10px; }
+
+    .hint::after {
+      content: '•';
+      position: absolute;
+      font-size: 20px;
+      color: yellow;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.6;
+    }
   </style>
 </head>
 <body>
@@ -59,6 +71,14 @@
       size = parseInt(document.getElementById("size").value);
       board = Array(size * size).fill(null);
       currentPlayer = 'B';
+
+      // 初始化中心四格
+      const mid = Math.floor(size / 2);
+      board[mid * size + mid] = 'W';
+      board[(mid - 1) * size + (mid - 1)] = 'W';
+      board[mid * size + (mid - 1)] = 'B';
+      board[(mid - 1) * size + mid] = 'B';
+
       render();
       statusDiv.textContent = "輪到：\u26AB 玩家 (黑)";
     }
@@ -70,6 +90,11 @@
       board.forEach((cell, i) => {
         const div = document.createElement("div");
         div.className = "cell";
+
+        if (!cell && canMove(i, currentPlayer)) {
+          div.classList.add("hint");
+        }
+
         const piece = cell === 'B' ? '<span class="black">\u26AB</span>' : (cell === 'W' ? '<span class="white">\u26AB</span>' : '');
         div.innerHTML = piece;
         div.onclick = () => handleClick(i);
@@ -85,14 +110,26 @@
 
     function handleClick(index) {
       if (board[index] || !canMove(index, currentPlayer)) return;
+
       makeMove(index, currentPlayer);
       currentPlayer = currentPlayer === 'B' ? 'W' : 'B';
+
+      if (!hasAnyMove(currentPlayer)) {
+        currentPlayer = currentPlayer === 'B' ? 'W' : 'B';
+        if (!hasAnyMove(currentPlayer)) {
+          endGame();
+          return;
+        } else {
+          alert("對手無法行動，輪回你！");
+        }
+      }
+
       render();
       statusDiv.textContent = `輪到：${currentPlayer === 'B' ? '\u26AB 玩家 (黑)' : '\u26AA 玩家 (白)'}`;
     }
 
     function getFlips(index, player) {
-      const directions = [-1, 1, -size, size, -size-1, -size+1, size-1, size+1];
+      const directions = [-1, 1, -size, size, -size - 1, -size + 1, size - 1, size + 1];
       const flips = [];
       const opponent = player === 'B' ? 'W' : 'B';
       const row = Math.floor(index / size);
@@ -101,14 +138,21 @@
       for (let dir of directions) {
         const temp = [];
         let i = index + dir;
+
         while (i >= 0 && i < size * size) {
           const r = Math.floor(i / size);
           const c = i % size;
-          if (Math.abs(r - row) > 1 && Math.abs(c - col) > 1) break;
+
+          // 防止越界移動（如從一行跳到下一行）
+          if (Math.abs(r - row) > Math.abs((i - index) / size) ||
+              Math.abs(c - col) > Math.abs((i - index) % size)) break;
+
           if (board[i] === opponent) {
             temp.push(i);
           } else if (board[i] === player) {
-            flips.push(...temp);
+            if (temp.length > 0) {
+              flips.push(...temp);
+            }
             break;
           } else {
             break;
@@ -116,17 +160,37 @@
           i += dir;
         }
       }
+
       return flips;
     }
 
     function canMove(index, player) {
-      return getFlips(index, player).length > 0;
+      return board[index] === null && getFlips(index, player).length > 0;
+    }
+
+    function hasAnyMove(player) {
+      return board.some((_, i) => canMove(i, player));
     }
 
     function makeMove(index, player) {
       const flips = getFlips(index, player);
       flips.forEach(i => board[i] = player);
       board[index] = player;
+    }
+
+    function endGame() {
+      const score = {
+        B: board.filter(c => c === 'B').length,
+        W: board.filter(c => c === 'W').length
+      };
+
+      if (score.B > score.W) {
+        statusDiv.textContent = "🎉 黑方獲勝！";
+      } else if (score.W > score.B) {
+        statusDiv.textContent = "🎉 白方獲勝！";
+      } else {
+        statusDiv.textContent = "🤝 平手！";
+      }
     }
   </script>
 </body>
